@@ -1,15 +1,8 @@
-import express from "express";
+import { createServer } from "./server"
 
-const app = express()
+
+const app = createServer()
 const port = 9002
-
-app.get('/info', (request, response) => {
-    response.send(`Server running on port: ${port} ...`)
-})
-
-app.get('/', (request, response) => {
-    response.send('Welcome!')
-})
 
 app.listen(port, () => {
     console.log(`Server running on port: ${port} ...`)
