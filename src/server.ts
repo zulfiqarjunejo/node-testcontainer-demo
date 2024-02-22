@@ -3,15 +3,12 @@ import { PostModel } from "./posts/model";
 import { PostModelImpl } from "./posts/model.impl";
 import postgres from "postgres";
 
-export function createServer(): Express {
-    // Databases
-    const pool = postgres({
-        "database": "nnt_demo", // TODO: use environment variables
-        "host": "postgres",
-        "password": "demo",
-        "user": "demo",
-    });
-    
+export type CreateServerOpts = {
+    pool: postgres.Sql;
+};
+
+export function createServer(opts: CreateServerOpts): Express {
+    const { pool } = opts;
     const app = express();
 
     // Middlewares
@@ -27,7 +24,7 @@ export function createServer(): Express {
 
     app.get('/posts', async (request, response) => {
         const posts = await postModel.getAll();
-        response.json(posts);
+        response.json({ posts });
     });
 
     return app;
