@@ -1,5 +1,7 @@
+import postgres from "postgres";
 import { createServer } from "./server";
 import request from "supertest";
+import { PostgreSqlContainer } from "@testcontainers/postgresql";
 
 beforeEach((done) => {
 	done();
@@ -9,19 +11,62 @@ afterEach((done) => {
 	done();
 });
 
-const app = createServer();
-
 test("GET /", async () => {
+	const postgresqlContainer = await new PostgreSqlContainer().start();
+
+	const pool = postgres({
+		"database": postgresqlContainer.getDatabase(),
+		"host": postgresqlContainer.getHost(),
+		"password": postgresqlContainer.getPassword(),
+		"port": postgresqlContainer.getPort(),
+		"username": postgresqlContainer.getUsername(),
+	});
+	const app = createServer({ pool });
+
 	await request(app)
 		.get("/")
 		.expect(200)
 		.then((response) => {
 			expect(response.text).toBe("Welcome!");
 		});
+
+	postgresqlContainer.stop();
 });
 
 test("GET /posts", async () => {
+	const postgresqlContainer = await new PostgreSqlContainer().start();
+
+	const pool = postgres({
+		"database": postgresqlContainer.getDatabase(),
+		"host": postgresqlContainer.getHost(),
+		"password": postgresqlContainer.getPassword(),
+		"port": postgresqlContainer.getPort(),
+		"username": postgresqlContainer.getUsername(),
+	});
+
+	await pool`
+	CREATE TABLE IF NOT EXISTS public.posts
+	(
+		id bigserial NOT NULL,
+		author_id bigint,
+		created_at date,
+		text character varying NOT NULL,
+		CONSTRAINT posts_pkey PRIMARY KEY (id)
+	)
+	`;
+
+	await pool`
+		INSERT INTO public.posts (author_id, created_at, text) VALUES (1, ${new Date().toISOString()}, 'post #1')
+	`;
+	await pool`
+		INSERT INTO public.posts (author_id, created_at, text) VALUES (1, ${new Date().toISOString()}, 'post #2')
+	`;
+
+	const app = createServer({ pool });
+
 	const response = await request(app).get("/posts");
 	expect(response.status).toBe(200);
-	expect(response.body?.posts.length).toBe(3);
+	expect(response.body?.posts.length).toBe(2);
+
+	postgresqlContainer.stop();
 });
