@@ -1,7 +1,13 @@
 import postgres from "postgres";
 import { createServer } from "./server";
 import request from "supertest";
-import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+
+let postgresqlContainer: StartedPostgreSqlContainer;
+
+beforeAll(async () => {
+	postgresqlContainer = await new PostgreSqlContainer().start();
+}, 10000);
 
 beforeEach((done) => {
 	done();
@@ -11,9 +17,11 @@ afterEach((done) => {
 	done();
 });
 
-test("GET /", async () => {
-	const postgresqlContainer = await new PostgreSqlContainer().start();
+afterAll(async () => {
+	await postgresqlContainer.stop();
+});
 
+test("GET /", async () => {
 	const pool = postgres({
 		"database": postgresqlContainer.getDatabase(),
 		"host": postgresqlContainer.getHost(),
@@ -29,13 +37,9 @@ test("GET /", async () => {
 		.then((response) => {
 			expect(response.text).toBe("Welcome!");
 		});
-
-	postgresqlContainer.stop();
 });
 
 test("GET /posts", async () => {
-	const postgresqlContainer = await new PostgreSqlContainer().start();
-
 	const pool = postgres({
 		"database": postgresqlContainer.getDatabase(),
 		"host": postgresqlContainer.getHost(),
@@ -67,6 +71,4 @@ test("GET /posts", async () => {
 	const response = await request(app).get("/posts");
 	expect(response.status).toBe(200);
 	expect(response.body?.posts.length).toBe(2);
-
-	postgresqlContainer.stop();
 });
