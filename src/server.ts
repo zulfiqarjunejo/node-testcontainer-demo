@@ -18,11 +18,11 @@ export function createServer(opts: CreateServerOpts): Express {
     const postModel: PostModel = new PostModelImpl(pool);
 
     // Routes
-    app.get('/', (request, response) => {
-        response.send('Welcome!')
+    app.get("/", (request, response) => {
+        response.send("Welcome!");
     });
 
-    app.get('/posts', async (request, response) => {
+    app.get("/posts", async (request, response) => {
         const posts = await postModel.getAll();
         response.json({ posts });
     });
