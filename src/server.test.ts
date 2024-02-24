@@ -6,49 +6,49 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 let postgresqlContainer: StartedPostgreSqlContainer;
 
 beforeAll(async () => {
-	postgresqlContainer = await new PostgreSqlContainer().start();
+    postgresqlContainer = await new PostgreSqlContainer().start();
 }, 10000);
 
 beforeEach((done) => {
-	done();
+    done();
 });
 
 afterEach((done) => {
-	done();
+    done();
 });
 
 afterAll(async () => {
-	await postgresqlContainer.stop();
+    await postgresqlContainer.stop();
 });
 
 test("GET /", async () => {
-	const pool = postgres({
-		"database": postgresqlContainer.getDatabase(),
-		"host": postgresqlContainer.getHost(),
-		"password": postgresqlContainer.getPassword(),
-		"port": postgresqlContainer.getPort(),
-		"username": postgresqlContainer.getUsername(),
-	});
-	const app = createServer({ pool });
+    const pool = postgres({
+        "database": postgresqlContainer.getDatabase(),
+        "host": postgresqlContainer.getHost(),
+        "password": postgresqlContainer.getPassword(),
+        "port": postgresqlContainer.getPort(),
+        "username": postgresqlContainer.getUsername(),
+    });
+    const app = createServer({ pool });
 
-	await request(app)
-		.get("/")
-		.expect(200)
-		.then((response) => {
-			expect(response.text).toBe("Welcome!");
-		});
+    await request(app)
+        .get("/")
+        .expect(200)
+        .then((response) => {
+            expect(response.text).toBe("Welcome!");
+        });
 });
 
 test("GET /posts", async () => {
-	const pool = postgres({
-		"database": postgresqlContainer.getDatabase(),
-		"host": postgresqlContainer.getHost(),
-		"password": postgresqlContainer.getPassword(),
-		"port": postgresqlContainer.getPort(),
-		"username": postgresqlContainer.getUsername(),
-	});
+    const pool = postgres({
+        "database": postgresqlContainer.getDatabase(),
+        "host": postgresqlContainer.getHost(),
+        "password": postgresqlContainer.getPassword(),
+        "port": postgresqlContainer.getPort(),
+        "username": postgresqlContainer.getUsername(),
+    });
 
-	await pool`
+    await pool`
 	CREATE TABLE IF NOT EXISTS public.posts
 	(
 		id bigserial NOT NULL,
@@ -59,16 +59,16 @@ test("GET /posts", async () => {
 	)
 	`;
 
-	await pool`
+    await pool`
 		INSERT INTO public.posts (author_id, created_at, text) VALUES (1, ${new Date().toISOString()}, 'post #1')
 	`;
-	await pool`
+    await pool`
 		INSERT INTO public.posts (author_id, created_at, text) VALUES (1, ${new Date().toISOString()}, 'post #2')
 	`;
 
-	const app = createServer({ pool });
+    const app = createServer({ pool });
 
-	const response = await request(app).get("/posts");
-	expect(response.status).toBe(200);
-	expect(response.body?.posts.length).toBe(2);
+    const response = await request(app).get("/posts");
+    expect(response.status).toBe(200);
+    expect(response.body?.posts.length).toBe(2);
 });
